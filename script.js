@@ -1,6 +1,7 @@
-// ▼▼▼ This script now reads data from the Google Sheets API URL ▼▼▼
-const googleSheetUrl = 'AKfycbzLE8wLm0l0CaaXCkcB3BuIILVwOlB4toDGKUzSIuE/exec'; // Replace with your actual Google Apps Script URL
-// ▲▲▲ This script now reads data from the Google Sheets API URL ▲▲▲
+// ▼▼▼ This script now reads data from the Google Apps Script URL ▼▼▼
+// (We will get this URL in Part 2)
+const googleSheetUrl = 'https://raw.githubusercontent.com/<your-github-username>/<your-repo-name>/main/agreement-compliance-tracker-42a2524fdd04.json';
+// ▲▲▲ This script now reads data from the Google Apps Script URL ▲▲▲
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- START: Global variables ---
@@ -24,21 +25,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ▼▼▼ THIS FUNCTION IS UPDATED WITH ON-SCREEN ERROR REPORTING ▼▼▼ ---
     async function fetchData() {
+         if (googleSheetUrl === 'PASTE_YOUR_NEW_APPS_SCRIPT_URL_HERE') {
+             loader.innerHTML = `<div class="text-center p-8">
+                <h2 class="mt-4 text-2xl font-semibold text-red-700">Project Not Configured</h2>
+                <p class="text-gray-600 mt-2">Please complete Part 2 (Google Apps Script) and paste your new URL into the script.js file.</p>
+            </div>`;
+            return;
+        }
+        
         try {
-            // This now fetches the data from Google Sheets (or another online source like GitHub Pages)
             const response = await fetch(googleSheetUrl);
             
             if (!response.ok) {
-                throw new Error(`Network Error: ${response.status} (${response.statusText}). Could not fetch the data.`);
+                throw new Error(`Network Error: ${response.status} (${response.statusText}). Could not fetch the data from the Apps Script URL.`);
             }
             
-            const jsonData = await response.json();
+            // We now expect JSON, not CSV
+            const jsonData = await response.json(); 
             
-            if (!jsonData || jsonData.length === 0) {
-                throw new Error('File Error: The data is empty or invalid.');
+            if (!jsonData || !jsonData.data || jsonData.data.length === 0) {
+                throw new Error('File Error: The data from Apps Script is empty or invalid.');
             }
             
-            loadDataFromSheet(jsonData);  // Load the data into your dashboard
+            loadDataFromSheet(jsonData.data); // Load the data
 
             loader.classList.add('hidden');
             dashboardContent.classList.remove('hidden');
@@ -78,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
         
         if (missingHeaders.length > 0) {
-            throw new Error(`Header Mismatch Error: The script could not find these required columns: ${missingHeaders.join(', ')}. Please check your data.`);
+            throw new Error(`Header Mismatch Error: The script could not find these required columns: ${missingHeaders.join(', ')}. Please check your Apps Script code or Sheet headers.`);
         }
 
         // If all checks pass, proceed with mapping
@@ -111,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('ai-email-output').select();
             document.execCommand('copy');
         });
-        document.getElementById('export-csv-btn').addEventListener('click', exportTableToCSV);
+         document.getElementById('export-csv-btn').addEventListener('click', exportTableToCSV);
 
         document.getElementById('city-filter').addEventListener('change', updateDashboard);
         document.getElementById('team-filter').addEventListener('change', updateDashboard);
@@ -122,6 +131,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateDashboard();
     }
+
+    // --- ▼▼▼ MERGED FROM YOUR NEW CODE ▼▼▼ ---
+    function populateFilters() {
+        populateFilter('city-filter', [...new Set(masterData.map(d => d.city))]);
+        populateFilter('team-filter', [...new Set(masterData.map(d => d.team))]);
+        populateFilter('employee-filter', [...new Set(masterData.map(d => d.email))]);
+        populateFilter('status-filter', [...new Set(masterData.map(d => d.status))]);
+        populateFilter('remarks-bucket-filter', [...new Set(masterData.map(d => d.remarksBucket))]);
+    }
+
+    function populateFilter(id, values) {
+        const filter = document.getElementById(id);
+        filter.innerHTML = '<option value="All">All</option>' + values.filter(v => v && v !== "N/A").sort().map(v => `<option value="${v}">${v}</option>`).join('');
+    }
+    // --- ▲▲▲ MERGED FROM YOUR NEW CODE ▲▲▲ ---
 
     // Function to update the dashboard based on filters
     function updateDashboard() {
@@ -149,8 +173,88 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCityChart(currentFilteredData);
         updateTable(currentFilteredData);
     }
+    
+    // --- AI FUNCTIONS - YOUR KEY IS ALREADY ADDED ---
+    async function callGemini(userQuery, outputElement, buttonElement) {
+        buttonElement.disabled = true;
+        outputElement.innerHTML = `<div class="flex items-center justify-center"><div class="w-8 h-8 border-4 border-dashed rounded-full animate-spin border-blue-500"></div><p class="ml-3 text-gray-600">Generating... a moment please.</p></div>`;
 
-    // Function to update KPIs (Key Performance Indicators)
+        // ▼▼▼ YOUR API KEY IS ADDED HERE ▼▼▼
+        const apiKey = "AIzaSyAIosznCFtzPI5YGlmgZWkj9ttIURVWaJU";
+        // ▲▲▲ YOUR API KEY IS ADDED HERE ▲▲▲
+        
+        if (!apiKey) {
+            outputElement.innerHTML = `<p class="text-red-500">AI feature is disabled. Please add your API key to <strong>script.js</strong>.</p>`;
+            buttonElement.disabled = false;
+            return null;
+        }
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const payload = { contents: [{ parts: [{ text: userQuery }] }] };
+        
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+            
+            const result = await response.json();
+            const candidate = result.candidates?.[0];
+            const text = candidate?.content?.parts?.[0]?.text;
+            
+            if (text) {
+                return text;
+            } else {
+                throw new Error("Invalid response structure from API.");
+            }
+        } catch (error) {
+            console.error('Error calling Gemini API:', error);
+            outputElement.innerHTML = `<p class="text-red-500">An error occurred. Please check the console.</p>`;
+            return null;
+        } finally {
+            buttonElement.disabled = false;
+        }
+    }
+
+    async function getAInsights() {
+        const summaryOutput = document.getElementById('ai-summary-output');
+        const emailContainer = document.getElementById('ai-email-container');
+        emailContainer.classList.add('hidden');
+        
+        const dataSample = currentFilteredData.slice(0, 25).map(d => ({
+            status: d.status, city: d.city, team: d.team, remarksBucket: d.remarksBucket, email: d.email
+        }));
+
+        const userQuery = `You are an expert compliance analyst reviewing agreement data. The following is a sample of the currently filtered data in JSON format: ${JSON.stringify(dataSample, null, 2)}\n\nBased on this data, provide a concise summary. Your summary must include: 1. An overall executive summary. 2. A bulleted list of the top 3 compliance issues from the 'remarksBucket' column. 3. A bulleted list identifying teams, cities, or employees with the most non-compliant agreements. 4. One or two actionable recommendations. Format in simple HTML using <p>, <h3>, <ul>, and <li> tags. Make headings bold.`;
+        
+        const summary = await callGemini(userQuery, summaryOutput, document.getElementById('generate-summary-btn'));
+        if (summary) summaryOutput.innerHTML = summary;
+    }
+
+    async function draftEmail() {
+        const summaryOutput = document.getElementById('ai-summary-output');
+        const emailContainer = document.getElementById('ai-email-container');
+        const emailOutput = document.getElementById('ai-email-output');
+        summaryOutput.innerHTML = '<p>Click a button to generate AI insights based on the current filters.</p>';
+
+        const dataSample = currentFilteredData.slice(0, 25).map(d => ({
+            status: d.status, city: d.city, team: d.team, remarksBucket: d.remarksBucket, email: d.email
+        }));
+
+        const userQuery = `You are a compliance manager drafting a follow-up email about non-compliant agreements based on a filtered report. Here is a sample of the filtered data: ${JSON.stringify(dataSample, null, 2)}\n\nDraft a professional and clear email. The email should: 1. Have a clear subject line. 2. Address the relevant team(s) or a general "All Teams". 3. State the total number of non-compliant agreements found in the current view. 4. List the most common reasons for non-compliance (the top 'remarksBucket' values). 5. Politely request a review of these agreements and a corrective action plan. Do not use any HTML tags, just plain text suitable for an email body.`;
+        
+        const emailText = await callGemini(userQuery, summaryOutput, document.getElementById('draft-email-btn'));
+        if (emailText) {
+            summaryOutput.innerHTML = '<p>Email draft generated below.</p>';
+            emailOutput.value = emailText;
+            emailContainer.classList.remove('hidden');
+        }
+    }
+    
+    // --- ALL CHART AND TABLE FUNCTIONS ---
+
     function updateKPIs(data) {
         const total = data.length;
         const valid = data.filter(item => item.status && item.status.toLowerCase() === 'valid').length;
@@ -176,8 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('valid-agreements').textContent = valid;
         document.getElementById('invalid-agreements').textContent = invalid;
     }
-
-    // Helper function to create or update charts
+    
     function createOrUpdateChart(chartId, type, data, options) {
         const ctx = document.getElementById(chartId).getContext('2d');
         if (chartInstances[chartId]) {
@@ -186,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chartInstances[chartId] = new Chart(ctx, { type, data, options });
     }
 
-    // Function to update the status chart
     function updateStatusChart(data) {
         const statusCounts = data.reduce((acc, item) => {
             const status = item.status || 'N/A';
@@ -205,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
         createOrUpdateChart('statusChart', 'doughnut', chartData, options);
     }
 
-    // Function to update the remarks chart
     function updateRemarksChart(data) {
         const remarksData = data
             .filter(item => item.remarksBucket && item.remarksBucket !== 'N/A' && item.remarksBucket.trim() !== '')
@@ -230,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
         createOrUpdateChart('remarksChart', 'bar', chartData, options);
     }
 
-    // Function to create a grouped bar chart (for team or city)
     function createGroupedBarChart(chartId, data, categoryKey) {
         const categories = [...new Set(data.map(item => item[categoryKey]).filter(cat => cat && cat.trim() !== 'N/A' && cat.trim() !== ''))].sort();
         const validData = [];
@@ -258,18 +358,15 @@ document.addEventListener('DOMContentLoaded', () => {
         createOrUpdateChart(chartId, 'bar', chartData, options);
     }
 
-    // Function to update the team chart
     function updateTeamChart(data) {
         createGroupedBarChart('teamChart', data, 'team');
     }
 
-    // Function to update the city chart
     function updateCityChart(data) {
         createGroupedBarChart('cityChart', data, 'city');
     }
     
     let currentTableData = [];
-    // Function to update the table
     function updateTable(data, searchTerm = '') {
         if (data) {
             currentTableData = data;
@@ -311,7 +408,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // Function to export the table data to CSV
     function exportTableToCSV() {
         const headers = ["Name of Employee", "Society Name", "City", "Team", "Status", "Bucket of Issues"];
         const rows = currentFilteredData.map(item => [
