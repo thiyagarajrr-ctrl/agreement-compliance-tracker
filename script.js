@@ -1,5 +1,5 @@
 // ▼▼▼ This script now reads data from the Google Sheets API URL ▼▼▼
-const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/1lzVuggUnKz4EI5xsR8V5BWY6alwpvI1qw0athTg4c_0/edit'; // Replace with your actual Google Apps Script URL
+const googleSheetUrl = 'AKfycbzLE8wLm0l0CaaXCkcB3BuIILVwOlB4toDGKUzSIuE'; // Replace with your actual Google Apps Script URL
 // ▲▲▲ This script now reads data from the Google Sheets API URL ▲▲▲
 
 document.addEventListener('DOMContentLoaded', () => {
