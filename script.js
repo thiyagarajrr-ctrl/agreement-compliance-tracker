@@ -1,6 +1,6 @@
-// ▼▼▼ YOU MUST PASTE YOUR GOOGLE SHEET URL HERE IN STEP 3 ▼▼▼
+// ▼▼▼ YOUR GOOGLE SHEET URL IS ADDED ▼▼▼
 const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Ria-F3ylgE_a_CTsP1UaAsvo8wcVm3x97OzvHPhYgmhKwFYsU-mICuBlHYH0uhbH5baBb66SPpc2/pub?gid=0&single=true&output=csv';
-// ▲▲▲ YOU MUST PASTE YOUR GOOGLE SHEET URL HERE IN STEP 3 ▲▲▲
+// ▲▲▲ YOUR GOOGLE SHEET URL IS ADDED ▲▲▲
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- START: Global variables ---
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!googleSheetUrl) {
              loader.innerHTML = `<div class="text-center">
                 <h2 class="mt-4 text-xl font-semibold text-red-700">Project Not Configured</h2>
-                <p class="text-gray-500">Please complete Step 3 and paste your Google Sheet URL into the script.js file.</p>
+                <p class="text-gray-500">Please paste your Google Sheet URL into the script.js file.</p>
             </div>`;
             return;
         }
@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // ▲▲▲ YOUR API KEY IS ADDED HERE ▲▲▲
         
         if (!apiKey) {
-            outputElement.innerHTML = `<p class="text-red-500">AI feature is disabled. Please complete Step 5 and add your API key to <strong>script.js</strong>.</p>`;
+            outputElement.innerHTML = `<p class="text-red-500">AI feature is disabled. Please add your API key to <strong>script.js</strong>.</p>`;
             buttonElement.disabled = false;
             return null;
         }
