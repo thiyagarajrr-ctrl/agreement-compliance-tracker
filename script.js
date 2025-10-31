@@ -1,5 +1,5 @@
 // ▼▼▼ YOU MUST PASTE YOUR GOOGLE SHEET URL HERE IN STEP 3 ▼▼▼
-const googleSheetUrl = '';
+const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Ria-F3ylgE_a_CTsP1UaAsvo8wcVm3x97OzvHPhYgmhKwFYsU-mICuBlHYH0uhbH5baBb66SPpc2/pub?gid=0&single=true&output=csv';
 // ▲▲▲ YOU MUST PASTE YOUR GOOGLE SHEET URL HERE IN STEP 3 ▲▲▲
 
 document.addEventListener('DOMContentLoaded', () => {
