@@ -1,6 +1,6 @@
-// ▼▼▼ YOUR GOOGLE SHEET URL IS ADDED ▼▼▼
-const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Ria-F3ylgE_a_CTsP1UaAsvo8wcVm3x97OzvHPhYgmhKwFYsU-mICuBlHYH0uhbH5baBb66SPpc2/pub?gid=0&single=true&output=csv';
-// ▲▲▲ YOUR GOOGLE SHEET URL IS ADDED ▲▲▲
+// ▼▼▼ THIS SCRIPT NOW READS THE LOCAL data.csv FILE ▼▼▼
+const googleSheetUrl = 'data.csv';
+// ▲▲▲ THIS SCRIPT NOW READS THE LOCAL data.csv FILE ▲▲▲
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- START: Global variables ---
@@ -24,27 +24,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ▼▼▼ THIS FUNCTION IS UPDATED WITH ON-SCREEN ERROR REPORTING ▼▼▼ ---
     async function fetchData() {
-        if (!googleSheetUrl) {
-             loader.innerHTML = `<div class="text-center p-8">
-                <h2 class="mt-4 text-2xl font-semibold text-red-700">Project Not Configured</h2>
-                <p class="text-gray-600 mt-2">Please paste your Google Sheet URL into the script.js file.</p>
-            </div>`;
-            return;
-        }
-        
         try {
-            const response = await fetch(googleSheetUrl);
+            // This now fetches the local 'data.csv' file from your repository
+            const response = await fetch(googleSheetUrl); 
             
-            // Check for network errors (404, 403, etc.)
             if (!response.ok) {
-                throw new Error(`Network Error: ${response.status} (${response.statusText}). Please check your Google Sheet URL.`);
+                throw new Error(`Network Error: ${response.status} (${response.statusText}). Could not find the 'data.csv' file.`);
             }
             
             const csvText = await response.text();
             
-            // Check for empty or HTML response (like a Google login page)
             if (!csvText || csvText.trim().startsWith('<')) {
-                throw new Error('Fetch Error: The URL did not return a valid CSV file. It might be an HTML login page. Please re-publish your sheet.');
+                throw new Error('File Error: The data.csv file is empty or invalid. Please re-upload it.');
             }
 
             const jsonData = parseCSV(csvText);
@@ -56,10 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
             dashboardContent.style.opacity = 1;
 
         } catch (error) {
-            console.error('Error fetching or parsing data:', error); // Keep this for future
+            console.error('Error fetching or parsing data:', error); 
             
-            // --- THIS IS THE NEW PART ---
-            // Display the error message directly on the page
             loader.innerHTML = `<div class="text-center p-8">
                 <h2 class="mt-4 text-2xl font-semibold text-red-700">A JavaScript Error Occurred</h2>
                 <p class="text-gray-600 mt-2">The dashboard cannot load. Please send a screenshot of this error.</p>
@@ -106,7 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('Data Load Error: The CSV file was parsed, but it contains no data.');
         }
 
-        // Check for the critical headers
         const headers = Object.keys(sheetData[0]);
         const requiredHeaders = [
             "Name of Employee",
@@ -120,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
         
         if (missingHeaders.length > 0) {
-            throw new Error(`Header Mismatch Error: The script could not find these required columns: ${missingHeaders.join(', ')}. Please check your Google Sheet.`);
+            throw new Error(`Header Mismatch Error: The script could not find these required columns in your data.csv file: ${missingHeaders.join(', ')}. Please check your CSV headers.`);
         }
 
         // If all checks pass, proceed with mapping
@@ -231,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const remarksBucketFilter = document.getElementById('remarks-bucket-filter');
 
         cityFilter.innerHTML = '<option value="All">All Cities</option>';
-        teamFilter.innerHTML = '<option value="All">All Teams</option>';
+        teamFilter.innerHTML = '<option value."All">All Teams</option>';
         employeeFilter.innerHTML = '<option value="All">All Employees</option>'; 
         statusFilter.innerHTML = '<option value="All">All Statuses</option>';
         remarksBucketFilter.innerHTML = '<option value="All">All Buckets</option>';
