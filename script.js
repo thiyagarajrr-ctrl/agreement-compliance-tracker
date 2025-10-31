@@ -22,21 +22,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardContent = document.getElementById('dashboard-content');
     // --- END: Global variables ---
 
-    // --- START: Live Data Fetching Logic ---
+    // --- ▼▼▼ THIS FUNCTION IS UPDATED WITH ON-SCREEN ERROR REPORTING ▼▼▼ ---
     async function fetchData() {
         if (!googleSheetUrl) {
-             loader.innerHTML = `<div class="text-center">
-                <h2 class="mt-4 text-xl font-semibold text-red-700">Project Not Configured</h2>
-                <p class="text-gray-500">Please paste your Google Sheet URL into the script.js file.</p>
+             loader.innerHTML = `<div class="text-center p-8">
+                <h2 class="mt-4 text-2xl font-semibold text-red-700">Project Not Configured</h2>
+                <p class="text-gray-600 mt-2">Please paste your Google Sheet URL into the script.js file.</p>
             </div>`;
             return;
         }
         
         try {
             const response = await fetch(googleSheetUrl);
-            if (!response.ok) throw new Error('Network response was not ok. Check your Sheet URL and permissions.');
+            
+            // Check for network errors (404, 403, etc.)
+            if (!response.ok) {
+                throw new Error(`Network Error: ${response.status} (${response.statusText}). Please check your Google Sheet URL.`);
+            }
             
             const csvText = await response.text();
+            
+            // Check for empty or HTML response (like a Google login page)
+            if (!csvText || csvText.trim().startsWith('<')) {
+                throw new Error('Fetch Error: The URL did not return a valid CSV file. It might be an HTML login page. Please re-publish your sheet.');
+            }
+
             const jsonData = parseCSV(csvText);
             
             loadDataFromSheet(jsonData); 
@@ -46,13 +56,21 @@ document.addEventListener('DOMContentLoaded', () => {
             dashboardContent.style.opacity = 1;
 
         } catch (error) {
-            console.error('Error fetching or parsing data:', error);
-            loader.innerHTML = `<div class="text-center">
-                <h2 class="mt-4 text-xl font-semibold text-red-700">Error Loading Data</h2>
-                <p class="text-gray-500">Could not fetch data. Please check the Sheet URL and ensure it's published to the web as a CSV.</p>
+            console.error('Error fetching or parsing data:', error); // Keep this for future
+            
+            // --- THIS IS THE NEW PART ---
+            // Display the error message directly on the page
+            loader.innerHTML = `<div class="text-center p-8">
+                <h2 class="mt-4 text-2xl font-semibold text-red-700">A JavaScript Error Occurred</h2>
+                <p class="text-gray-600 mt-2">The dashboard cannot load. Please send a screenshot of this error.</p>
+                <div class="text-left bg-red-50 p-4 mt-4 rounded-md border border-red-300" style="font-family: monospace;">
+                    <strong class="text-red-800">Error Message:</strong>
+                    <pre class="text-red-700 whitespace-pre-wrap">${error.message}</pre>
+                </div>
             </div>`;
         }
     }
+    // --- ▲▲▲ THIS FUNCTION IS UPDATED ▲▲▲ ---
 
     function parseCSV(text) {
         const lines = text.split(/\r?\n/);
@@ -82,8 +100,30 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchData();
     // --- END: Live Data Fetching Logic ---
 
-    // --- THIS FUNCTION IS MAPPED TO YOUR FINAL HEADERS ---
+    // --- ▼▼▼ THIS FUNCTION IS UPDATED WITH HEADER VALIDATION ▼▼▼ ---
     function loadDataFromSheet(sheetData) {
+        if (!sheetData || sheetData.length === 0) {
+            throw new Error('Data Load Error: The CSV file was parsed, but it contains no data.');
+        }
+
+        // Check for the critical headers
+        const headers = Object.keys(sheetData[0]);
+        const requiredHeaders = [
+            "Name of Employee",
+            "CITY",
+            "TEAM",
+            "Agreement Status Final",
+            "Bucket of Issues",
+            "Society Name"
+        ];
+        
+        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+        
+        if (missingHeaders.length > 0) {
+            throw new Error(`Header Mismatch Error: The script could not find these required columns: ${missingHeaders.join(', ')}. Please check your Google Sheet.`);
+        }
+
+        // If all checks pass, proceed with mapping
         masterData = sheetData.map(row => {
             return {
                 email: row["Name of Employee"] || "N/A",           // FD Column
@@ -100,13 +140,9 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         });
         
-        if (masterData.length === 0) {
-             alert("No data found in the sheet. Please check your sheet.");
-             return;
-        }
-        
         initializeDashboard(); 
     }
+    // --- ▲▲▲ THIS FUNCTION IS UPDATED ▲▲▲ ---
 
     // --- AI FUNCTIONS - YOUR KEY IS ALREADY ADDED ---
     async function callGemini(userQuery, outputElement, buttonElement) {
