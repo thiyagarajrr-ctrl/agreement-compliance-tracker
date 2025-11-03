@@ -1,6 +1,6 @@
-// ▼▼▼ YOUR GOOGLE SHEET URL IS ADDED ▼▼▼
-const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Ria-F3ylgE_a_CTsP1UaAsvo8wcVm3x97OzvHPhYgmhKwFYsU-mICuBlHYH0uhbH5baBb66SPpc2/pub?gid=0&single=true&output=csv';
-// ▲▲▲ YOUR GOOGLE SHEET URL IS ADDED ▲▲▲
+// ▼▼▼ This script now reads the local data.csv file ▼▼▼
+const googleSheetUrl = 'data.csv';
+// ▲▲▲ This script now reads the local data.csv file ▲▲▲
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- START: Global variables ---
@@ -24,25 +24,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ▼▼▼ THIS FUNCTION IS UPDATED WITH ON-SCREEN ERROR REPORTING ▼▼▼ ---
     async function fetchData() {
-        if (!googleSheetUrl) {
-             loader.innerHTML = `<div class="text-center p-8">
-                <h2 class="mt-4 text-2xl font-semibold text-red-700">Project Not Configured</h2>
-                <p class="text-gray-600 mt-2">Please paste your Google Sheet URL into the script.js file.</p>
-            </div>`;
-            return;
-        }
-        
         try {
-            const response = await fetch(googleSheetUrl);
+            // This now fetches the local 'data.csv' file from your repository
+            const response = await fetch(googleSheetUrl); 
             
             if (!response.ok) {
-                throw new Error(`Network Error: ${response.status} (${response.statusText}). Please check your Google Sheet URL.`);
+                throw new Error(`Network Error: ${response.status} (${response.statusText}). Could not find the 'data.csv' file. Please upload it to your GitHub repository.`);
             }
             
             const csvText = await response.text();
             
             if (!csvText || csvText.trim().startsWith('<')) {
-                throw new Error('Fetch Error: The URL did not return a valid CSV file. It might be an HTML login page. Please re-publish your sheet.');
+                throw new Error('File Error: The data.csv file is empty or invalid. Please re-upload it.');
             }
 
             const jsonData = parseCSV(csvText);
@@ -137,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (missingKeys.length > 0) {
             // Report the "clean" names of the missing keys, which is more helpful
-            throw new Error(`Header Mismatch Error: The script could not find these required columns: ${missingKeys.join(', ')}. Please check your CSV headers for spelling.`);
+            throw new Error(`Header Mismatch Error: The script could not find these required columns in your data.csv file: ${missingKeys.join(', ')}. Please check your CSV headers for spelling.`);
         }
 
         // --- Create a *final* map of the *actual* header names to use ---
