@@ -1,171 +1,37 @@
-/* Base styles */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f8fafc;
-  margin: 20px;
-  color: #333;
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f2f5;
 }
-
-/* Loader */
-#loader {
-  font-size: 1.2rem;
-  color: #555;
-  text-align: center;
-  padding: 40px;
-}
-
-/* Hidden class utility */
-.hidden {
-  display: none !important;
-}
-
-/* Dashboard content container */
-#dashboard-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-}
-
-/* Filters styling */
-select {
-  padding: 8px 12px;
-  margin: 10px 5px 20px 0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background-color: white;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-/* KPIs */
-#total-agreements, #compliance-rate, #valid-agreements, #invalid-agreements {
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-
-/* Trend arrow */
-#trend-arrow {
-  font-size: 1.4rem;
-  vertical-align: middle;
-  margin-left: 8px;
-}
-
-/* Chart containers */
-canvas {
-  max-width: 100%;
-  height: 300px !important;
-  margin-bottom: 40px;
-}
-
-/* Table styles */
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 15px;
-  box-shadow: 0 2px 5px rgb(0 0 0 / 0.05);
-}
-
-th, td {
-  text-align: left;
-  padding: 12px 15px;
-  border-bottom: 1px solid #eff2f7;
-  font-size: 0.95rem;
-}
-
-th {
-  background-color: #e9ecef;
-  font-weight: 700;
-  color: #495057;
-}
-
-tr:hover {
-  background-color: #f1f3f5;
-  cursor: pointer;
-}
-
-/* Status badge styles */
-span.bg-green-100 {
-  background-color: #d1e7dd;
-  color: #0f5132;
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-span.bg-red-100 {
-  background-color: #f8d7da;
-  color: #842029;
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-/* Search input */
-#table-search {
-  width: 100%;
-  padding: 10px;
-  margin: 15px 0;
-  box-sizing: border-box;
-  border-radius: 5px;
-  border: 1px solid #ced4da;
-  font-size: 1rem;
-}
-
-/* No data message */
-#no-data-message {
-  color: #6c757d;
-  font-style: italic;
-  text-align: center;
-  margin-top: 20px;
-}
-
-/* Buttons style for export or other controls */
-button {
-  background-color: #0d6efd;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  margin: 10px 5px 20px 0;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  box-shadow: 0 2px 6px rgb(13 110 253 / 0.4);
-  transition: background-color 0.3s ease;
-}
-
-button:hover {
-  background-color: #0b5ed7;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  table, th, td {
-    display: block;
-    width: 100%;
-  }
-
-  tr {
-    margin-bottom: 15px;
-    display: block;
-    border-bottom: 2px solid #dee2e6;
-  }
-
-  td {
-    text-align: right;
-    padding-left: 50%;
+.chart-container {
     position: relative;
-  }
-
-  td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: 15px;
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    color: #6c757d;
-  }
+    width: 100%;
+    height: 350px;
+    max-height: 400px;
+}
+.kpi-card {
+    background-color: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.3s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+.filter-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+#ai-summary-output ul, #ai-email-output ul {
+    list-style-position: inside;
+    list-style-type: disc;
+    padding-left: 1rem;
+}
+#ai-summary-output li, #ai-email-output li {
+    margin-bottom: 0.5rem;
 }
