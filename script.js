@@ -1,6 +1,6 @@
-// ▼▼▼ This script now reads the local data.csv file ▼▼▼
-const googleSheetUrl = 'data.csv';
-// ▲▲▲ This script now reads the local data.csv file ▲▲▲
+// ▼▼▼ This script now reads the NEW data_v2.csv file ▼▼▼
+const googleSheetUrl = 'data_v2.csv';
+// ▲▲▲ This script now reads the NEW data_v2.csv file ▲▲▲
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- START: Global variables ---
@@ -25,17 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ▼▼▼ THIS FUNCTION IS UPDATED WITH ON-SCREEN ERROR REPORTING ▼▼▼ ---
     async function fetchData() {
         try {
-            // This now fetches the local 'data.csv' file from your repository
+            // This now fetches the local 'data_v2.csv' file from your repository
             const response = await fetch(googleSheetUrl); 
             
             if (!response.ok) {
-                throw new Error(`Network Error: ${response.status} (${response.statusText}). Could not find the 'data.csv' file. Please upload it to your GitHub repository.`);
+                throw new Error(`Network Error: ${response.status} (${response.statusText}). Could not find the 'data_v2.csv' file. Please upload it to your GitHub repository.`);
             }
             
             const csvText = await response.text();
             
             if (!csvText || csvText.trim().startsWith('<')) {
-                throw new Error('File Error: The data.csv file is empty or invalid. Please re-upload it.');
+                throw new Error('File Error: The data_v2.csv file is empty or invalid. Please re-upload it.');
             }
 
             const jsonData = parseCSV(csvText);
@@ -463,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="px-6 py-4">${item.societyName || 'N/A'}</td>
                         <td class="px-6 py-4">${item.city || 'N/A'}</td>
                         <td class="px-6 py-4">${item.team || 'N/A'}</td>
-                        <td class="px-6 py-4">
+                        <td class.px-6 py-4">
                             <span class="px-2 py-1 text-xs font-medium rounded-full ${item.status && item.status.toLowerCase() === 'valid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                                 ${item.status || 'N/A'}
                             </span>
