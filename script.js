@@ -250,7 +250,8 @@ document.addEventListener('DOMContentLoaded', () => {
             emailContainer.classList.remove('hidden');
         }
     }
-    
+
+    // Function to populate the filter dropdowns dynamically
     function populateFilters() {
         const cityFilter = document.getElementById('city-filter');
         const teamFilter = document.getElementById('team-filter');
@@ -277,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         remarksBuckets.forEach(bucket => remarksBucketFilter.innerHTML += `<option value="${bucket}">${bucket}</option>`);
     }
 
+    // Function to initialize the dashboard with events and initial data population
     function initializeDashboard() {
         populateFilters();
         
@@ -298,6 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDashboard();
     }
 
+    // Function to update the dashboard based on filter selections
     function updateDashboard() {
         const city = document.getElementById('city-filter').value;
         const team = document.getElementById('team-filter').value;
@@ -324,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTable(currentFilteredData);
     }
     
+    // Function to update KPIs
     function updateKPIs(data) {
         const total = data.length;
         const valid = data.filter(item => item.status && item.status.toLowerCase() === 'valid').length;
@@ -358,6 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         chartInstances[chartId] = new Chart(ctx, { type, data, options });
     }
 
+    // Function to update the status chart
     function updateStatusChart(data) {
         const statusCounts = data.reduce((acc, item) => {
             const status = item.status || 'N/A';
@@ -376,6 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createOrUpdateChart('statusChart', 'doughnut', chartData, options);
     }
 
+    // Function to update the remarks chart
     function updateRemarksChart(data) {
         const remarksData = data
             .filter(item => item.remarksBucket && item.remarksBucket !== 'N/A' && item.remarksBucket.trim() !== '')
@@ -400,6 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
         createOrUpdateChart('remarksChart', 'bar', chartData, options);
     }
 
+    // Function to create a grouped bar chart
     function createGroupedBarChart(chartId, data, categoryKey) {
         const categories = [...new Set(masterData.map(item => item[categoryKey]).filter(cat => cat && cat.trim() !== 'N/A' && cat.trim() !== ''))].sort();
         const validData = [];
@@ -427,10 +434,12 @@ document.addEventListener('DOMContentLoaded', () => {
         createOrUpdateChart(chartId, 'bar', chartData, options);
     }
 
+    // Function to update team chart
     function updateTeamChart(data) {
         createGroupedBarChart('teamChart', data, 'team');
     }
 
+    // Function to update city chart
     function updateCityChart(data) {
         createGroupedBarChart('cityChart', data, 'city');
     }
