@@ -136,18 +136,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Create a *final* map of the *actual* header names to use ---
         // This map will be like: { email: 'Name of Employee', city: 'CITY', ... }
         const headerMap = {
-            email: headerLookup["Name of Employee"],
-            city: headerLookup["CITY"],
-            team: headerLookup["TEAM"],
-            status: headerLookup["Agreement Status Final"],
-            remarksBucket: headerLookup["Bucket of Issues"],
-            societyName: headerLookup["Society Name"],
+            email: headerLookup["name of employee"],
+            city: headerLookup["city"],
+            team: headerLookup["team"],
+            status: headerLookup["agreement status final"],
+            remarksBucket: headerLookup["bucket of issues"],
+            societyName: headerLookup["society name"],
             // Also map the non-required headers, if they exist
-            product: headerLookup["Product"],
-            refId: headerLookup["Ref Id"],
-            transactionDate: headerLookup["Transaction Date"],
-            receivedAmount: headerLookup["Received Amount"],
-            kibanaId: headerLookup["Kibana Id"]
+            product: headerLookup["product"],
+            refId: headerLookup["ref id"],
+            transactionDate: headerLookup["transaction date"],
+            receivedAmount: headerLookup["received amount"],
+            kibanaId: headerLookup["kibana id"]
         };
 
         // If all checks pass, proceed with mapping using the headerMap
