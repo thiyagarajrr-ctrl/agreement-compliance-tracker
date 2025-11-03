@@ -1,7 +1,6 @@
-// ▼▼▼ This script now reads data from the Google Apps Script URL ▼▼▼
-// (We will get this URL in Part 2)
-const googleSheetUrl = 'https://raw.githubusercontent.com/<your-github-username>/<your-repo-name>/main/agreement-compliance-tracker-42a2524fdd04.json';
-// ▲▲▲ This script now reads data from the Google Apps Script URL ▲▲▲
+// ▼▼▼ YOUR GOOGLE SHEET URL IS ADDED ▼▼▼
+const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ8Ria-F3ylgE_a_CTsP1UaAsvo8wcVm3x97OzvHPhYgmhKwFYsU-mICuBlHYH0uhbH5baBb66SPpc2/pub?gid=0&single=true&output=csv';
+// ▲▲▲ YOUR GOOGLE SHEET URL IS ADDED ▲▲▲
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- START: Global variables ---
@@ -25,10 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- ▼▼▼ THIS FUNCTION IS UPDATED WITH ON-SCREEN ERROR REPORTING ▼▼▼ ---
     async function fetchData() {
-         if (googleSheetUrl === 'PASTE_YOUR_NEW_APPS_SCRIPT_URL_HERE') {
+        if (!googleSheetUrl) {
              loader.innerHTML = `<div class="text-center p-8">
                 <h2 class="mt-4 text-2xl font-semibold text-red-700">Project Not Configured</h2>
-                <p class="text-gray-600 mt-2">Please complete Part 2 (Google Apps Script) and paste your new URL into the script.js file.</p>
+                <p class="text-gray-600 mt-2">Please paste your Google Sheet URL into the script.js file.</p>
             </div>`;
             return;
         }
@@ -37,18 +36,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(googleSheetUrl);
             
             if (!response.ok) {
-                throw new Error(`Network Error: ${response.status} (${response.statusText}). Could not fetch the data from the Apps Script URL.`);
+                throw new Error(`Network Error: ${response.status} (${response.statusText}). Please check your Google Sheet URL.`);
             }
             
-            // We now expect JSON, not CSV
-            const jsonData = await response.json(); 
+            const csvText = await response.text();
             
-            if (!jsonData || !jsonData.data || jsonData.data.length === 0) {
-                throw new Error('File Error: The data from Apps Script is empty or invalid.');
+            if (!csvText || csvText.trim().startsWith('<')) {
+                throw new Error('Fetch Error: The URL did not return a valid CSV file. It might be an HTML login page. Please re-publish your sheet.');
             }
-            
-            loadDataFromSheet(jsonData.data); // Load the data
 
+            const jsonData = parseCSV(csvText);
+            
+            loadDataFromSheet(jsonData); 
+            
             loader.classList.add('hidden');
             dashboardContent.classList.remove('hidden');
             dashboardContent.style.opacity = 1;
@@ -68,112 +68,116 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // --- ▲▲▲ THIS FUNCTION IS UPDATED ▲▲▲ ---
 
-    // Function to parse the JSON data and process it into a usable format
+    // --- ▼▼▼ THIS FUNCTION IS UPDATED TO BE MORE ROBUST ▼▼▼ ---
+    function parseCSV(text) {
+        // Remove BOM (Byte Order Mark) if it exists
+        if (text.charCodeAt(0) === 0xFEFF) {
+            text = text.substring(1);
+        }
+
+        const lines = text.split(/\r?\n/);
+        if (lines.length === 0) return [];
+        
+        // Clean headers: trim whitespace and quotes
+        const headers = lines[0].split(',').map(header => {
+            return header.trim().replace(/^"|"$/g, ''); // Remove surrounding quotes
+        });
+        
+        const data = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line) {
+                // This regex handles commas inside quoted fields
+                const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                let entry = {};
+                headers.forEach((header, index) => {
+                    let value = values[index] ? values[index].trim() : '';
+                    // Clean value: trim whitespace and quotes
+                    value = value.replace(/^"|"$/g, ''); 
+                    entry[header] = value;
+                });
+                data.push(entry);
+            }
+        }
+        return data;
+    }
+    // --- ▲▲▲ THIS FUNCTION IS UPDATED ▲▲▲ ---
+
+    fetchData();
+    // --- END: Live Data Fetching Logic ---
+
+    // --- ▼▼▼ THIS FUNCTION IS UPDATED WITH SMARTER HEADER MATCHING ▼▼▼ ---
     function loadDataFromSheet(sheetData) {
         if (!sheetData || sheetData.length === 0) {
-            throw new Error('Data Load Error: The data is empty.');
+            throw new Error('Data Load Error: The CSV file was parsed, but it contains no data.');
         }
 
-        const headers = Object.keys(sheetData[0]);
-        const requiredHeaders = [
-            "Name of Employee",
-            "CITY",
-            "TEAM",
-            "Agreement Status Final",
-            "Bucket of Issues",
-            "Society Name"
+        // Get the actual headers from the file (already trimmed by parseCSV)
+        const actualHeaders = Object.keys(sheetData[0]);
+        
+        // Create a "clean" lookup map: { 'bucket of issues': 'Bucket of Issues' }
+        const headerLookup = {};
+        actualHeaders.forEach(h => {
+            headerLookup[h.trim().toLowerCase()] = h;
+        });
+
+        // These are the "clean" keys we are looking for (all lowercase)
+        const requiredKeys = [
+            "name of employee",
+            "city",
+            "team",
+            "agreement status final",
+            "bucket of issues",
+            "society name"
         ];
         
-        const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+        // Find which clean keys are missing from the lookup
+        const missingKeys = requiredKeys.filter(k => !headerLookup[k]);
         
-        if (missingHeaders.length > 0) {
-            throw new Error(`Header Mismatch Error: The script could not find these required columns: ${missingHeaders.join(', ')}. Please check your Apps Script code or Sheet headers.`);
+        if (missingKeys.length > 0) {
+            // Report the "clean" names of the missing keys, which is more helpful
+            throw new Error(`Header Mismatch Error: The script could not find these required columns: ${missingKeys.join(', ')}. Please check your CSV headers for spelling.`);
         }
 
-        // If all checks pass, proceed with mapping
+        // --- Create a *final* map of the *actual* header names to use ---
+        // This map will be like: { email: 'Name of Employee', city: 'CITY', ... }
+        const headerMap = {
+            email: headerLookup["name of employee"],
+            city: headerLookup["city"],
+            team: headerLookup["team"],
+            status: headerLookup["agreement status final"],
+            remarksBucket: headerLookup["bucket of issues"],
+            societyName: headerLookup["society name"],
+            // Also map the non-required headers, if they exist
+            product: headerLookup["product"],
+            refId: headerLookup["ref id"],
+            transactionDate: headerLookup["transaction date"],
+            receivedAmount: headerLookup["received amount"],
+            kibanaId: headerLookup["kibana id"]
+        };
+
+        // If all checks pass, proceed with mapping using the headerMap
         masterData = sheetData.map(row => {
             return {
-                email: row["Name of Employee"] || "N/A",
-                city: row["CITY"] || "N/A",
-                team: row["TEAM"] || "N/A",
-                status: row["Agreement Status Final"] || "N/A",
-                remarksBucket: row["Bucket of Issues"] || "N/A",
-                societyName: row["Society Name"] || "N/A",
-                product: row["Product"] || "N/A",
-                refId: row["Ref Id"] || "N/A",
-                transactionDate: row["Transaction Date"] || "N/A",
-                receivedAmount: row["Received Amount"] || "N/A",
-                kibanaId: row["Kibana Id"] || "N/A"
+                email: row[headerMap.email] || "N/A",
+                city: row[headerMap.city] || "N/A",
+                team: row[headerMap.team] || "N/A",
+                status: row[headerMap.status] || "N/A",
+                remarksBucket: row[headerMap.remarksBucket] || "N/A",
+                societyName: row[headerMap.societyName] || "N/A",
+                product: row[headerMap.product] || "N/A",
+                refId: row[headerMap.refId] || "N/A",
+                transactionDate: row[headerMap.transactionDate] || "N/A",
+                receivedAmount: row[headerMap.receivedAmount] || "N/A",
+                kibanaId: row[headerMap.kibanaId] || "N/A"
             };
         });
-
-        initializeDashboard(); // Update the dashboard with the fetched data
-    }
-
-    // Function to initialize the dashboard with the fetched data
-    function initializeDashboard() {
-        populateFilters();
         
-        document.getElementById('generate-summary-btn').addEventListener('click', getAInsights);
-        document.getElementById('draft-email-btn').addEventListener('click', draftEmail);
-        document.getElementById('copy-email-btn').addEventListener('click', () => {
-            document.getElementById('ai-email-output').select();
-            document.execCommand('copy');
-        });
-         document.getElementById('export-csv-btn').addEventListener('click', exportTableToCSV);
-
-        document.getElementById('city-filter').addEventListener('change', updateDashboard);
-        document.getElementById('team-filter').addEventListener('change', updateDashboard);
-        document.getElementById('employee-filter').addEventListener('change', updateDashboard); 
-        document.getElementById('status-filter').addEventListener('change', updateDashboard);
-        document.getElementById('remarks-bucket-filter').addEventListener('change', updateDashboard);
-        document.getElementById('table-search').addEventListener('input', (e) => updateTable(null, e.target.value));
-
-        updateDashboard();
+        initializeDashboard(); 
     }
+    // --- ▲▲▲ THIS FUNCTION IS UPDATED ▲▲▲ ---
 
-    // --- ▼▼▼ MERGED FROM YOUR NEW CODE ▼▼▼ ---
-    function populateFilters() {
-        populateFilter('city-filter', [...new Set(masterData.map(d => d.city))]);
-        populateFilter('team-filter', [...new Set(masterData.map(d => d.team))]);
-        populateFilter('employee-filter', [...new Set(masterData.map(d => d.email))]);
-        populateFilter('status-filter', [...new Set(masterData.map(d => d.status))]);
-        populateFilter('remarks-bucket-filter', [...new Set(masterData.map(d => d.remarksBucket))]);
-    }
-
-    function populateFilter(id, values) {
-        const filter = document.getElementById(id);
-        filter.innerHTML = '<option value="All">All</option>' + values.filter(v => v && v !== "N/A").sort().map(v => `<option value="${v}">${v}</option>`).join('');
-    }
-    // --- ▲▲▲ MERGED FROM YOUR NEW CODE ▲▲▲ ---
-
-    // Function to update the dashboard based on filters
-    function updateDashboard() {
-        const city = document.getElementById('city-filter').value;
-        const team = document.getElementById('team-filter').value;
-        const employee = document.getElementById('employee-filter').value; 
-        const status = document.getElementById('status-filter').value;
-        const remarksBucket = document.getElementById('remarks-bucket-filter').value;
-
-        currentFilteredData = masterData.filter(item => {
-            return (city === 'All' || item.city === city) &&
-                   (team === 'All' || item.team === team) &&
-                   (employee === 'All' || item.email === employee) && 
-                   (status === 'All' || item.status === status) &&
-                   (remarksBucket === 'All' || item.remarksBucket === remarksBucket);
-        });
-
-        document.getElementById('ai-summary-output').innerHTML = '<p>Click a button to generate AI insights based on the current filters.</p>';
-        document.getElementById('ai-email-container').classList.add('hidden');
-
-        updateKPIs(currentFilteredData);
-        updateStatusChart(currentFilteredData);
-        updateRemarksChart(currentFilteredData);
-        updateTeamChart(currentFilteredData);
-        updateCityChart(currentFilteredData);
-        updateTable(currentFilteredData);
-    }
-    
     // --- AI FUNCTIONS - YOUR KEY IS ALREADY ADDED ---
     async function callGemini(userQuery, outputElement, buttonElement) {
         buttonElement.disabled = true;
@@ -253,8 +257,79 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // --- ALL CHART AND TABLE FUNCTIONS ---
+    function populateFilters() {
+        const cityFilter = document.getElementById('city-filter');
+        const teamFilter = document.getElementById('team-filter');
+        const employeeFilter = document.getElementById('employee-filter'); 
+        const statusFilter = document.getElementById('status-filter');
+        const remarksBucketFilter = document.getElementById('remarks-bucket-filter');
 
+        cityFilter.innerHTML = '<option value="All">All Cities</option>';
+        teamFilter.innerHTML = '<option value="All">All Teams</option>';
+        employeeFilter.innerHTML = '<option value="All">All Employees</option>'; 
+        statusFilter.innerHTML = '<option value="All">All Statuses</option>';
+        remarksBucketFilter.innerHTML = '<option value="All">All Buckets</option>';
+
+        const cities = [...new Set(masterData.map(item => item.city).filter(Boolean))].sort();
+        const teams = [...new Set(masterData.map(item => item.team).filter(Boolean))].sort();
+        const employees = [...new Set(masterData.map(item => item.email).filter(Boolean))].sort();
+        const statuses = [...new Set(masterData.map(item => item.status).filter(Boolean))].sort();
+        const remarksBuckets = [...new Set(masterData.map(item => item.remarksBucket).filter(b => b && b.trim() !== 'N/A' && b.trim() !== ''))].sort();
+
+        cities.forEach(city => cityFilter.innerHTML += `<option value="${city}">${city}</option>`);
+        teams.forEach(team => teamFilter.innerHTML += `<option value="${team}">${team}</option>`);
+        employees.forEach(emp => employeeFilter.innerHTML += `<option value="${emp}">${emp}</option>`); 
+        statuses.forEach(status => statusFilter.innerHTML += `<option value="${status}">${status}</option>`);
+        remarksBuckets.forEach(bucket => remarksBucketFilter.innerHTML += `<option value="${bucket}">${bucket}</option>`);
+    }
+
+    function initializeDashboard() {
+        populateFilters();
+        
+        document.getElementById('generate-summary-btn').addEventListener('click', getAInsights);
+        document.getElementById('draft-email-btn').addEventListener('click', draftEmail);
+        document.getElementById('copy-email-btn').addEventListener('click', () => {
+            document.getElementById('ai-email-output').select();
+            document.execCommand('copy');
+        });
+         document.getElementById('export-csv-btn').addEventListener('click', exportTableToCSV);
+
+        document.getElementById('city-filter').addEventListener('change', updateDashboard);
+        document.getElementById('team-filter').addEventListener('change', updateDashboard);
+        document.getElementById('employee-filter').addEventListener('change', updateDashboard); 
+        document.getElementById('status-filter').addEventListener('change', updateDashboard);
+        document.getElementById('remarks-bucket-filter').addEventListener('change', updateDashboard);
+        document.getElementById('table-search').addEventListener('input', (e) => updateTable(null, e.target.value));
+
+        updateDashboard();
+    }
+
+    function updateDashboard() {
+        const city = document.getElementById('city-filter').value;
+        const team = document.getElementById('team-filter').value;
+        const employee = document.getElementById('employee-filter').value; 
+        const status = document.getElementById('status-filter').value;
+        const remarksBucket = document.getElementById('remarks-bucket-filter').value;
+
+        currentFilteredData = masterData.filter(item => {
+            return (city === 'All' || item.city === city) &&
+                   (team === 'All' || item.team === team) &&
+                   (employee === 'All' || item.email === employee) && 
+                   (status === 'All' || item.status === status) &&
+                   (remarksBucket === 'All' || item.remarksBucket === remarksBucket);
+        });
+
+        document.getElementById('ai-summary-output').innerHTML = '<p>Click a button to generate AI insights based on the current filters.</p>';
+        document.getElementById('ai-email-container').classList.add('hidden');
+
+        updateKPIs(currentFilteredData);
+        updateStatusChart(currentFilteredData);
+        updateRemarksChart(currentFilteredData);
+        updateTeamChart(currentFilteredData);
+        updateCityChart(currentFilteredData);
+        updateTable(currentFilteredData);
+    }
+    
     function updateKPIs(data) {
         const total = data.length;
         const valid = data.filter(item => item.status && item.status.toLowerCase() === 'valid').length;
