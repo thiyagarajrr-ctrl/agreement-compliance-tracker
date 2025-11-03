@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agreement Compliance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="text-gray-800">
+
+    <div id="loader" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-blue-500 mx-auto"></div>
+            <h2 class="mt-4 text-xl font-semibold text-gray-700">Fetching Data...</h2>
+            <p class="text-gray-500">Loading data.csv file.</p>
+        </div>
+    </div>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8">
+        <header class="mb-6 text-center">
+            <h1 class="text-4xl font-bold text-gray-900">Agreement Compliance Dashboard</h1>
+            <p class="text-gray-500 mt-2">Analysis of compliance data.</p>
+        </header>
+
+        <div id="dashboard-content" class="opacity-0 transition-opacity duration-500 hidden">
+            <p class="text-center text-gray-500 my-4">Displaying all available agreement data from data.csv</p>
+            
+            <section id="ai-insights-section" class="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6">
+                 <h2 class="text-xl font-bold text-gray-800 mb-4">✨ AI-Powered Tools</h2>
+                 <div class="flex flex-wrap gap-4 mb-4">
+                     <button id="generate-summary-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                         Generate Compliance Summary
+                     </button>
+                      <button id="draft-email-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                         ✨ Draft Follow-up Email
+                     </button>
+                 </div>
+                 <div id="ai-summary-output" class="text-gray-600 space-y-2 border-t pt-4">
+                     <p>Click a button to generate AI insights based on the current filters.</p>
+                 </div>
+                  <div id="ai-email-container" class="hidden mt-4 border-t pt-4">
+                     <h3 class="text-lg font-semibold text-gray-800 mb-2">Generated Email Draft</h3>
+                     <textarea id="ai-email-output" class="w-full h-64 p-2 border border-gray-300 rounded-md" readonly></textarea>
+                     <button id="copy-email-btn" class="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">Copy to Clipboard</button>
+                 </div>
+            </section>
+
+            <section id="kpi-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+                <div class="kpi-card">
+                    <h3 class="text-sm font-medium text-gray-500">Total Agreements</h3>
+                    <p id="total-agreements" class="text-3xl font-bold text-gray-900 mt-2">0</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 class="text-sm font-medium text-gray-500 flex items-center">Compliance Rate <span id="trend-arrow" class="ml-2"></span></h3>
+                    <p id="compliance-rate" class="text-3xl font-bold text-green-600 mt-2">0%</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 class="text-sm font-medium text-gray-500">Valid Agreements</h3>
+                    <p id="valid-agreements" class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 class="text-sm font-medium text-gray-500">Non-Compliant</h3>
+                    <p id="invalid-agreements" class="text-3xl font-bold text-red-600 mt-2">0</p>
+                </div>
+            </section>
+
+            <section id="filter-section" class="bg-white rounded-lg shadow-md p-4 mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-center">
+                 <div class="flex-grow">
+                    <label for="city-filter" class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                    <select id="city-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 filter-select">
+                        <option value="All">All Cities</option>
+                    </select>
+                </div>
+                <div class="flex-grow">
+                    <label for="team-filter" class="block text-sm font-medium text-gray-700 mb-1">Team</label>
+                    <select id="team-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 filter-select">
+                        <option value="All">All Teams</option>
+                    </select>
+                </div>
+                 <div class="flex-grow">
+                    <label for="employee-filter" class="block text-sm font-medium text-gray-700 mb-1">Name of Employee</label>
+                    <select id="employee-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 filter-select">
+                        <option value="All">All Employees</option>
+                    </select>
+                </div>
+                <div class="flex-grow">
+                    <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">Agreement Status</label>
+                    <select id="status-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 filter-select">
+                        <option value="All">All Statuses</option>
+                    </select>
+                </div>
+                 <div class="flex-grow">
+                    <label for="remarks-bucket-filter" class="block text-sm font-medium text-gray-700 mb-1">Bucket of Issues</label>
+                    <select id="remarks-bucket-filter" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 filter-select">
+                        <option value="All">All Buckets</option>
+                    </select>
+                </div>
+            </section>
+
+            <section id="charts-section" class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                     <h3 class="text-lg font-semibold text-gray-800 mb-1">Agreement Status Overview</h3>
+                     <p class="text-sm text-gray-500 mb-4">Distribution of agreements by their final status.</p>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                     <h3 class="text-lg font-semibold text-gray-800 mb-1">Issues by Bucket</h3>
+                     <p class="text-sm text-gray-500 mb-4">Categorizes non-compliant agreements by issue.</p>
+                    <div class="chart-container">
+                        <canvas id="remarksChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-1">Compliance by Team</h3>
+                    <p class="text-sm text-gray-500 mb-4">Valid vs. non-compliant agreements per team.</p>
+                    <div class="chart-container">
+                        <canvas id="teamChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-4 md:p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-1">Compliance by City</h3>
+                    <p class="text-sm text-gray-500 mb-4">Valid vs. non-compliant agreements per city.</p>
+                    <div class="chart-container">
+                        <canvas id="cityChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="table-section" class="bg-white rounded-lg shadow-md p-4 md:p-6 mt-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Agreement Details</h3>
+                    <button id="export-csv-btn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">
+                        Export Table to CSV
+                    </button>
+                </div>
+                <input type="text" id="table-search" class="w-full p-2 border border-gray-300 rounded-md mb-4" placeholder="Search in details...">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Name of Employee</th>
+                                <th scope="col" classs="px-6 py-3">Society Name</th>
+                                <th scope="col" class="px-6 py-3">City</th>
+                                <th scope="col" class="px-6 py-3">Team</th>
+                                <th scope="col" class="px-6 py-3">Status</th>
+                                <th scope="col" class="px-6 py-3">Bucket of Issues</th>
+                            </tr>
+                        </thead>
+                        <tbody id="details-table-body">
+                        </tbody>
+                    </table>
+                     <p id="no-data-message" class="text-center text-gray-500 py-8 hidden">No data available for the selected filters.</p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
