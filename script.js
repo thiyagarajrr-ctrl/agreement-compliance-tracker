@@ -118,12 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // These are the "clean" keys we are looking for (all lowercase)
         const requiredKeys = [
-            "name of employee",
+            "name_of_employee",
             "city",
             "team",
-            "agreement status final",
-            "bucket of issues",
-            "society name"
+            "agreement_status_final",
+            "bucket_of_issues",
+            "society_name"
         ];
         
         // Find which clean keys are missing from the lookup
@@ -137,18 +137,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Create a *final* map of the *actual* header names to use ---
         // This map will be like: { email: 'Name of Employee', city: 'CITY', ... }
         const headerMap = {
-            email: headerLookup["name of employee"],
+            email: headerLookup["name_of_employee"],
             city: headerLookup["city"],
             team: headerLookup["team"],
-            status: headerLookup["agreement status final"],
-            remarksBucket: headerLookup["bucket of issues"],
-            societyName: headerLookup["society name"],
+            status: headerLookup["agreement_status_final"],
+            remarksBucket: headerLookup["bucket_of_issues"],
+            societyName: headerLookup["society_name"],
             // Also map the non-required headers, if they exist
             product: headerLookup["product"],
-            refId: headerLookup["ref id"],
-            transactionDate: headerLookup["transaction date"],
-            receivedAmount: headerLookup["received amount"],
-            kibanaId: headerLookup["kibana id"]
+            refId: headerLookup["ref_id"],
+            transactionDate: headerLookup["transaction_date"],
+            receivedAmount: headerLookup["received_amount"],
+            kibanaId: headerLookup["kibana_id"]
         };
 
         // If all checks pass, proceed with mapping using the headerMap
